@@ -101,7 +101,7 @@ export async function GET(request: Request) {
           entrypoint: {
             url: url,
             maxDepth: 2,
-            maxPages: 5,
+            maxPages: 15,
             jsEnabled: true,
           }
         })
