@@ -1,0 +1,235 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Monochromatic gray scale */
+    --background: 0 0% 95%;
+    --foreground: 0 0% 20%;
+
+    --card: 0 0% 97%;
+    --card-foreground: 0 0% 20%;
+
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 40%;
+
+    --primary: 0 0% 20%;
+    --primary-foreground: 0 0% 95%;
+
+    --border: 0 0% 92%;
+    --ring: 0 0% 20%;
+
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 0 0% 85%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 85%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+
+    --primary: 0 0% 85%;
+    --primary-foreground: 0 0% 10%;
+
+    --border: 0 0% 15%;
+    --ring: 0 0% 80%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+  }
+
+  /* Refined typography */
+  h1,
+  h2,
+  h3,
+  h4,
+  p {
+    @apply text-sm font-light;
+  }
+
+  /* Custom scrollbar styling */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin; /* Firefox */
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px; /* width of the entire scrollbar */
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent; /* color of the tracking area */
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1); /* color of the scroll thumb */
+    border-radius: 20px; /* roundness of the scroll thumb */
+  }
+
+  .scrollbar-thin:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2); /* color of the scroll thumb on hover */
+  }
+
+  /* Improved scrollbar styling */
+  .fade-scrollbar {
+    @apply overflow-y-auto;
+  }
+
+  /* Firefox */
+  .fade-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+  }
+
+  /* Chrome, Edge, Safari */
+  .fade-scrollbar::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  .fade-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .fade-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+  }
+
+  /* Dark mode scrollbar */
+  .dark .fade-scrollbar {
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+
+  .dark .fade-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Text shimmer effect */
+  .text-shimmer {
+    background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.8) 0%,
+      rgba(0, 0, 0, 0.9) 20%,
+      rgba(0, 0, 0, 1) 40%,
+      rgba(0, 0, 0, 0.9) 60%,
+      rgba(0, 0, 0, 0.8) 80%,
+      rgba(0, 0, 0, 0.8) 100%
+    );
+    background-size: 200% auto;
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 2s linear infinite;
+  }
+
+  .text-shimmer-active {
+    background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.8) 0%,
+      rgba(0, 0, 0, 1) 20%,
+      rgba(0, 0, 0, 0.8) 40%,
+      rgba(0, 0, 0, 0.9) 60%,
+      rgba(0, 0, 0, 1) 80%,
+      rgba(0, 0, 0, 0.8) 100%
+    );
+    background-size: 200% auto;
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 1.5s linear infinite;
+  }
+
+  .text-shimmer-completed {
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0.8) 100%);
+    background-size: 200% auto;
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 0% center;
+    }
+    100% {
+      background-position: 200% center;
+    }
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-gradient-to-b from-muted/50 to-card/50 backdrop-blur-xl;
+  }
+
+  .subtle-shadow {
+    @apply shadow-[0_8px_16px_rgb(0,0,0,0.03)];
+  }
+
+  .input-minimal {
+    @apply bg-transparent border-0 border-b border-border/50 rounded-none px-0 
+           focus:ring-0 focus:border-foreground/20 transition-colors;
+  }
+
+  .input-field {
+    @apply bg-muted/50 border border-border/30 rounded-md px-3 py-2
+           focus:ring-1 focus:ring-foreground/20 focus:border-foreground/30 
+           transition-colors outline-none;
+  }
+
+  /* Text shimmer effect for progress labels */
+  .shimmer-text {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer-text::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.6) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmer 1.5s infinite;
+    transform: translateX(-100%);
+  }
+
+  .shimmer-text-active::after {
+    animation: shimmer 1.2s infinite;
+  }
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+}
