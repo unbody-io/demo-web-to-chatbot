@@ -213,12 +213,14 @@ export function useAgenticRag(
               const { answer, followups = [] } = data.output;
               updateOutput('generation', { answer, followUps: followups });
               updateStage(ERagStage.Generation);
-              updateStageStatus(ERagStage.Generation, 'done');
               updateProgress(75);
               setHistory(prev => {
                 const lastMessage = prev[prev.length - 1];
                 return [...prev.slice(0, -1), { ...lastMessage, content: answer, role: "assistant" }];
               });
+              if(data.finished){
+                updateStageStatus(ERagStage.Generation, 'done');
+              }
               break;
 
             case ERagStage.Valuation:

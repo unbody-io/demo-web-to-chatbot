@@ -130,9 +130,9 @@ export class AgenticRag<TCollectionMap extends Record<string, any> = NativeColle
                             this.eventEmitter.emit('retrieval', { output: context.retrieval.output });
                             break;
                         case RagPipelineStageName.Generation:
-                            context.generation = { output: output as GenerationOutput };
                             for await (const chunk of output) {
                                 this.eventEmitter.emit('generation', { output: chunk.content, finished: chunk.finished });
+                                context.generation.output = chunk.content;
                             }
                             break;
                         case RagPipelineStageName.Valuation:
