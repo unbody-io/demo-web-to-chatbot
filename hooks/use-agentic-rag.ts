@@ -258,7 +258,7 @@ export function useAgenticRag(
               break;
 
             default:
-              console.warn(`Unknown event: ${eventType}`);
+              console.warn(`Unknown event: ${event}`);
           }
         }
       }
