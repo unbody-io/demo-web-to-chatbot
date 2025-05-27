@@ -1,20 +1,21 @@
 // generativeAgent.ts
 
-import { z } from 'zod';
-import { 
-  Agent, 
-  GenerationOutput, 
-  RagPipelineStageName, 
+import { z } from "zod";
+import {
+  Agent,
+  GenerationOutput,
+  RagPipelineStageName,
   PromptContext,
   NativeCollectionMap,
   IRagMessage,
   BotIdentityConfig,
   PromptSystemConfig,
-  PromptTemplate
-} from '../rag-pipeline.types';
-import { unbody } from '../..';
-import { IGenerateMessage } from 'unbody';
-import { createPromptSystem } from '../rag-pipeline.configs';
+  PromptTemplate,
+} from "../rag-pipeline.types";
+import { unbody } from "../..";
+import { createPromptSystem } from "../rag-pipeline.configs";
+import type { EventIterator } from "event-iterator";
+import type { IGenerateMessage } from "unbody";
 
 export interface GenerationAgentOptions {
   promptSystem?: Partial<PromptSystemConfig>;
@@ -22,139 +23,170 @@ export interface GenerationAgentOptions {
   schema?: z.ZodObject<any>;
   maxPayloadResults?: number;
   format?: {
-    type: 'markdown' | 'html' | 'plain' | 'custom';
+    type: "markdown" | "html" | "plain" | "custom";
     customFormat?: string;
   };
 }
 
 const processConversationHistory = (
   history: IRagMessage[] = [],
-  options: PromptSystemConfig['conversationHistory'] = {}
+  options: PromptSystemConfig["conversationHistory"] = {}
 ): IRagMessage[] => {
   const {
     maxLength = 10,
     filter = () => true,
-    includeSystemMessages = false
+    includeSystemMessages = false,
   } = options;
 
   return history
-    .filter(msg => includeSystemMessages || msg.role !== 'system')
+    .filter((msg) => includeSystemMessages || msg.role !== "system")
     .filter(filter)
     .slice(-maxLength);
 };
 
 export function generativeAgent(
   options?: GenerationAgentOptions
-): Agent<GenerationOutput> {
+): Agent<EventIterator<Record<string, any>>> {
   return {
-    name: 'GenerativeAgent',
+    name: "GenerativeAgent",
     stage: RagPipelineStageName.Generation,
-    async execute(context, configs): Promise<GenerationOutput> {
+    async execute(
+      context,
+      configs
+    ): Promise<
+      EventIterator<Record<string, any>>
+    > {
       const maxPayloadResults = options?.maxPayloadResults || 3;
-      
-      const { 
-        understanding: { output: { query, concepts, intent } },
-        retrieval: { output: { results } }
+
+      const {
+        understanding: {
+          output: { query, concepts, intent },
+        },
+        retrieval: {
+          output: { results },
+        },
       } = context;
-      
+
       const rawHistory = context.conversationHistory || [];
-  
+
       const promptSystem = createPromptSystem(options?.promptSystem || {});
-      
+
       const processedHistory = processConversationHistory(
         rawHistory,
         promptSystem.conversationHistory
       );
-      
+
       const promptContext: PromptContext = {
         query,
         conversationHistory: processedHistory,
-        retrievedDocuments: results?.map(result => {
-          const config = configs.collectionConfigs[result.__typename as keyof NativeCollectionMap];
-          if (!config) {
-            return null;
-          }
-          const content = config.getDataForPrompt?.(result as any) || JSON.stringify(result);
-          return {
-            content,
-            metadata: {
-              type: result.__typename,
-              certainty: result._additional?.certainty
+        retrievedDocuments: results
+          ?.map((result) => {
+            const config =
+              configs.collectionConfigs[
+                result.__typename as keyof NativeCollectionMap
+              ];
+            if (!config) {
+              return null;
             }
-          }
-        }).filter((d): d is NonNullable<typeof d> => d !== null),
+            const content =
+              config.getDataForPrompt?.(result as any) ||
+              JSON.stringify(result);
+            return {
+              content,
+              metadata: {
+                type: result.__typename,
+                certainty: result._additional?.certainty,
+              },
+            };
+          })
+          .filter((d): d is NonNullable<typeof d> => d !== null),
         userContext: {
           concepts,
-          intent
+          intent,
         },
         maxHistoryLength: promptSystem.conversationHistory?.maxLength,
-        historyFilter: promptSystem.conversationHistory?.filter
+        historyFilter: promptSystem.conversationHistory?.filter,
       };
 
       const baseTemplates = promptSystem.baseTemplates || [];
-      const dynamicTemplates = (typeof promptSystem.dynamicTemplates === 'function') 
-        ? promptSystem.dynamicTemplates(promptContext) 
-        : [];
-      
+      const dynamicTemplates =
+        typeof promptSystem.dynamicTemplates === "function"
+          ? promptSystem.dynamicTemplates(promptContext)
+          : [];
+
       const allTemplates = [...baseTemplates, ...dynamicTemplates];
-      const selectedTemplateIds = (typeof promptSystem.templateSelector === 'function')
-        ? promptSystem.templateSelector(promptContext)
-        : allTemplates.map(t => t.id);
-      
+      const selectedTemplateIds =
+        typeof promptSystem.templateSelector === "function"
+          ? promptSystem.templateSelector(promptContext)
+          : allTemplates.map((t) => t.id);
+
       const selectedTemplates = selectedTemplateIds
-        .map(id => allTemplates.find(t => t.id === id))
+        .map((id) => allTemplates.find((t) => t.id === id))
         .filter((t): t is PromptTemplate => t !== undefined)
         .sort((a, b) => (a.priority || 0) - (b.priority || 0));
-      
-      const mergedPrompt = (typeof promptSystem.templateMerger === 'function')
-        ? promptSystem.templateMerger(selectedTemplates, promptContext)
-        : selectedTemplates.map(t => t.content).join('\n\n');
-      
-      const finalPrompt = (typeof promptSystem.templateFormatter === 'function')
-        ? promptSystem.templateFormatter(mergedPrompt, promptContext)
-        : mergedPrompt;
-      
-      const model = options?.model || 'gpt-4o';
-      
+
+      const mergedPrompt =
+        typeof promptSystem.templateMerger === "function"
+          ? promptSystem.templateMerger(selectedTemplates, promptContext)
+          : selectedTemplates.map((t) => t.content).join("\n\n");
+
+      const finalPrompt =
+        typeof promptSystem.templateFormatter === "function"
+          ? promptSystem.templateFormatter(mergedPrompt, promptContext)
+          : mergedPrompt;
+
+      const model = options?.model || "gpt-4o";
+
       const defaultSchema = z.object({
-        answer: z.string().describe(
-          options?.format?.type === 'markdown' 
-            ? "Provide a detailed answer in Markdown format with proper headings, lists, and code blocks where appropriate."
-            : options?.format?.type === 'html'
-            ? "Provide a detailed answer in HTML format with proper tags for structure and formatting."
-            : options?.format?.type === 'custom'
-            ? options.format.customFormat || "Provide a detailed answer."
-            : "Provide a detailed answer in plain text format."
-        ),
-        followups: z.array(z.string()).describe("Follow-up suggestion queries that users can ask to get more information."),
+        answer: z
+          .string()
+          .describe(
+            options?.format?.type === "markdown"
+              ? "Provide a detailed answer in Markdown format with proper headings, lists, and code blocks where appropriate."
+              : options?.format?.type === "html"
+              ? "Provide a detailed answer in HTML format with proper tags for structure and formatting."
+              : options?.format?.type === "custom"
+              ? options.format.customFormat || "Provide a detailed answer."
+              : "Provide a detailed answer in plain text format."
+          ),
+        followups: z
+          .array(z.string())
+          .describe(
+            "Follow-up suggestion queries that users can ask to get more information."
+          ),
       });
 
       const generationSchema = options?.schema || defaultSchema;
-      
+
       const messages: IGenerateMessage[] = [
         {
-          role: 'system',
-          content: finalPrompt
+          role: "system",
+          content: finalPrompt,
         },
-        ...processedHistory.map(msg => ({
+        ...processedHistory.map((msg) => ({
           role: msg.role,
-          content: msg.content
+          content: msg.content,
         })),
         {
-          role: 'user',
-          content: query
-        }
+          role: "user",
+          content: query,
+        },
       ];
-      
-      const result = await unbody.generate.json(messages, {
-        model,
-        schema: generationSchema,
-      }).catch((error) => {
-        console.error("Error generating response", error.response);
-        return { data: { payload: { content: { answer: "An error occurred", followups: [] } } } };
-      });
-      
-      return result.data.payload.content as GenerationOutput;
+
+      const result = await unbody.generate
+        .json(messages, {
+          model,
+          schema: generationSchema,
+          stream: true,
+        })
+        .catch((error) => {
+          console.error("Error generating response", error.response);
+          throw new Error(
+            `Generation failed: ${error.message || "Unknown error"}`
+          );
+        });
+
+      return result;
     },
   };
 }

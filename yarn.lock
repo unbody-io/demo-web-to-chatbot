@@ -1676,6 +1676,11 @@ estree-util-is-identifier-name@^3.0.0:
   resolved "https://registry.yarnpkg.com/estree-util-is-identifier-name/-/estree-util-is-identifier-name-3.0.0.tgz#0b5ef4c4ff13508b34dcd01ecfa945f61fce5dbd"
   integrity sha512-hFtqIDZTIUZ9BXLb8y4pYGyk6+wekIivNVTcmvk8NoOh+VeRn5y6cEHzbURrWbfp1fIqdVipilzj+lfaadNZmg==
 
+event-iterator@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/event-iterator/-/event-iterator-2.0.0.tgz#10f06740cc1e9fd6bc575f334c2bc1ae9d2dbf62"
+  integrity sha512-KGft0ldl31BZVV//jj+IAIGCxkvvUkkON+ScH6zfoX+l+omX6001ggyRSpI0Io2Hlro0ThXotswCtfzS8UkIiQ==
+
 eventemitter3@^4.0.1:
   version "4.0.7"
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
@@ -3254,12 +3259,13 @@ ufo@^1.0.0:
   resolved "https://registry.yarnpkg.com/ufo/-/ufo-1.6.1.tgz#ac2db1d54614d1b22c1d603e3aef44a85d8f146b"
   integrity sha512-9a4/uxlTWJ4+a5i0ooc1rU7C7YOw3wT+UGqdeNNHWnOF9qcMBgLRS+4IYUqbczewFx4mLEig6gawh7X6mFlEkA==
 
-unbody@^0.0.12:
-  version "0.0.12"
-  resolved "https://registry.yarnpkg.com/unbody/-/unbody-0.0.12.tgz#e34a1ffdb2ffdd2054b738a64471d8b26ba34113"
-  integrity sha512-a07PBlReRmESqHgal4mup9SJMzvao1PTWzS6pkcHR3AMVKCP5KRfhVL1z/+3bb+Dw1wgaTpSoyj0qVMC5RKq7w==
+unbody@^0.0.14:
+  version "0.0.14"
+  resolved "https://registry.yarnpkg.com/unbody/-/unbody-0.0.14.tgz#862e6ed2909c50030abf4e424741dbeafd4dbb78"
+  integrity sha512-bq7/4ZaIYe+L2iOL8fcwndVDR+zSQ+abu8hCg4aqK9dll4x6qXUChal3LGiVQMbYgGSBXF2y9AFRrZZePwSG8Q==
   dependencies:
     axios "^1.4.0"
+    event-iterator "^2.0.0"
     json-to-graphql-query "^2.2.5"
     lodash "^4.17.21"
     utility-types "^3.11.0"

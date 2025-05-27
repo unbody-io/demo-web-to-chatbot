@@ -131,7 +131,9 @@ export class AgenticRag<TCollectionMap extends Record<string, any> = NativeColle
                             break;
                         case RagPipelineStageName.Generation:
                             context.generation = { output: output as GenerationOutput };
-                            this.eventEmitter.emit('generation', { output: context.generation.output });
+                            for await (const chunk of output) {
+                                this.eventEmitter.emit('generation', { output: chunk.content, finished: chunk.finished });
+                            }
                             break;
                         case RagPipelineStageName.Valuation:
                             context.valuation = { output: output as ValuationOutput };
@@ -158,7 +160,7 @@ export class AgenticRag<TCollectionMap extends Record<string, any> = NativeColle
         return context.generation.output;
     }
 
-    public stream(query: string, options?: { conversationHistory?: IRagMessage[] }): ReadableStream<Uint8Array> {
+    public stream(query: string, options?: { conversationHistory?: IRagMessage[], signal?: AbortSignal }): ReadableStream<Uint8Array> {
         const self = this;
 
         let statusListener: (...args: any[]) => void;
