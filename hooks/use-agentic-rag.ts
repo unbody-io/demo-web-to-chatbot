@@ -80,8 +80,14 @@ export function useAgenticRag(
 
   const [history, setHistory] = useState<IRagMessage[]>([]);
   const [connectionState, setConnectionState] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+  
+  
   const abortControllerRef = useRef<AbortController | null>(null);
+
+
+
   const [isIdle, setIsIdle] = useState(true);
+
   const updateStage = useCallback((stage: ERagStage) => {
     setState(prev => ({
       ...prev,
@@ -256,6 +262,7 @@ export function useAgenticRag(
 
             case ERagStage.Generation:
               const { answer, followups = [] } = data.output;
+              console.log("Generation:", data.output)
               updateOutput('generation', { answer, followUps: followups });
               updateStage(ERagStage.Generation);
               updateProgress(75);

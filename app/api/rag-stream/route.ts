@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         },
       }
     });
-    
+
     const rag = new AgenticRag<NativeCollectionMap>({
       agents: [
         qAgent,
@@ -49,7 +49,8 @@ export async function POST(req: Request) {
       },
     });
 
-    const stream = rag.stream(query, { conversationHistory: history, signal: req.signal });
+    const stream = rag.stream(query, {
+      conversationHistory: history, signal: req.signal });
 
     req.signal.addEventListener("abort", ()=>{
       stream.cancel()

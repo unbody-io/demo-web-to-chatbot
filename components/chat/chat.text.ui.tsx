@@ -1,11 +1,10 @@
 import React, { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { SendIcon, Sparkles, RefreshCw, StopCircleIcon } from "lucide-react"
+import { SendIcon, StopCircleIcon } from "lucide-react"
 import { useChatbotContext } from "@/context/chatbot.context"
-import { ERagStage, useAgenticRag } from "@/hooks/use-agentic-rag"
-import { AssistantBlock, AssistantBlockProps } from "./message/assistant-block"
+import { useAgenticRag } from "@/hooks/use-agentic-rag"
+import { AssistantBlock } from "./message/assistant-block"
 import { UserBlockMessage } from "./message/user-block.message"
 import { cn, displayUrl } from "@/lib/utils"
 import { Textarea } from "@/components/ui/textarea"
@@ -20,7 +19,15 @@ export function ChatTextUI() {
     return null;
   }
 
-  const { state, query, isProcessing, isIdle, progress, history, cancel } = useAgenticRag({
+  const {
+    state,
+    query,
+    isProcessing,
+    isIdle,
+    progress,
+    history,
+    cancel
+  } = useAgenticRag({
     onComplete: (output: any) => {
       console.log("Pipeline completed:", output)
     },
@@ -114,7 +121,7 @@ export function ChatTextUI() {
               searchResults: state.output.retrieval?.results || (
                 history[history.length - 1]?.role === 'assistant' &&
                 history[history.length - 1]?.payload || []
-              ) || [] 
+              ) || []
             }}
           />
           {
