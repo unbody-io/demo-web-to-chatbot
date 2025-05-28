@@ -1,13 +1,8 @@
-"use client"
+"use client";
 
-import { useAgenticRag } from "@/hooks/use-agentic-rag"
-import { Progress } from "@/components/ui/progress"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useState } from "react"
-import { ChatbotProvider } from "@/context/chatbot.context"
-import { ChatUI } from "@/components/chat/chat"
+import { ChatUI } from "@/components/chat/chat";
+import { ChatbotProvider } from "@/context/chatbot.context";
+
 export default function ChatPage() {
   return (
     <ChatbotProvider>
@@ -17,6 +12,5 @@ export default function ChatPage() {
         </div>
       </div>
     </ChatbotProvider>
-  )
+  );
 }
-

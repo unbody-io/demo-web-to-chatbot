@@ -1,11 +1,10 @@
 import React, { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { SendIcon, Sparkles, RefreshCw } from "lucide-react"
+import { SendIcon, StopCircleIcon } from "lucide-react"
 import { useChatbotContext } from "@/context/chatbot.context"
-import { ERagStage, useAgenticRag } from "@/hooks/use-agentic-rag"
-import { AssistantBlock, AssistantBlockProps } from "./message/assistant-block"
+import { useAgenticRag } from "@/hooks/use-agentic-rag"
+import { AssistantBlock } from "./message/assistant-block"
 import { UserBlockMessage } from "./message/user-block.message"
 import { cn, displayUrl } from "@/lib/utils"
 import { Textarea } from "@/components/ui/textarea"
@@ -20,7 +19,15 @@ export function ChatTextUI() {
     return null;
   }
 
-  const { state, query, isProcessing, isIdle, progress, history } = useAgenticRag({
+  const {
+    state,
+    query,
+    isProcessing,
+    isIdle,
+    progress,
+    history,
+    cancel
+  } = useAgenticRag({
     onComplete: (output: any) => {
       console.log("Pipeline completed:", output)
     },
@@ -29,6 +36,9 @@ export function ChatTextUI() {
     },
     onStageChange: (stage: any) => {
       console.log("Stage changed to:", stage)
+    },
+    onCancel: (query) => {
+      query && setInput(query)
     }
   }, { configs: data.configs })
 
@@ -103,16 +113,19 @@ export function ChatTextUI() {
             loading={isProcessing}
             error={null}
             data={{
-              message: state.output.generation? {
+              message: (state.output.generation || history[history.length - 1]?.role === 'assistant')? {
                 ...history[history.length - 1],
-                content: state.output.generation.answer,
+                content: state.output.generation?.answer || history[history.length - 1].content,
               } : null,
               state: state.stage,
-              searchResults: state.output.retrieval?.results || []
+              searchResults: state.output.retrieval?.results || (
+                history[history.length - 1]?.role === 'assistant' &&
+                history[history.length - 1]?.payload || []
+              ) || []
             }}
           />
           {
-            state.output.generation && (
+            state.output.generation?.followUps && state.output.generation.followUps.length > 0 && (
               <div className="py-2">
                 <div className="text-xs text-muted-foreground">
                   Follow up questions
@@ -145,13 +158,20 @@ export function ChatTextUI() {
               }
             }}
           />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={!isIdle}
-          >
-            <SendIcon className="h-4 w-4" />
-          </Button>
+          {isProcessing || !isIdle ? (
+            <Button type="submit" size="icon" onClick={(event)=>{
+              event.stopPropagation()
+              event.preventDefault()
+
+              cancel()
+            }}>
+              <StopCircleIcon className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button type="submit" size="icon">
+              <SendIcon className="h-4 w-4" />
+            </Button>
+          )}
         </form>
       </div>
     </motion.div>

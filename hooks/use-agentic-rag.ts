@@ -44,6 +44,7 @@ export interface UseAgenticRagOptions {
   onComplete?: (output: RagState['output']) => void;
   onError?: (error: string) => void;
   onStageChange?: (stage: ERagStage) => void;
+  onCancel?: (query?: string) => void
 }
 
 interface StreamData {
@@ -79,8 +80,14 @@ export function useAgenticRag(
 
   const [history, setHistory] = useState<IRagMessage[]>([]);
   const [connectionState, setConnectionState] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+  
+  
   const abortControllerRef = useRef<AbortController | null>(null);
+
+
+
   const [isIdle, setIsIdle] = useState(true);
+
   const updateStage = useCallback((stage: ERagStage) => {
     setState(prev => ({
       ...prev,
@@ -123,7 +130,51 @@ export function useAgenticRag(
 
   const addToHistory = useCallback((message: IRagMessage) => {
     setHistory(prev => [...prev, message]);
-  }, []);
+  }, [setHistory]);
+
+  const cancel = useCallback(() => {
+    if(abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+
+      setIsIdle(true)
+      setConnectionState("idle")
+
+      setHistory(prev=> {
+        const history = [...prev];
+        const lastMessage = history[history.length - 1]
+
+        if(lastMessage.role === 'assistant' && lastMessage.content.length === 0) {
+          const userMessage = history[history.length - 2];
+          options.onCancel?.(userMessage.content);
+
+          history.pop();
+          history.pop();
+        }
+
+        return history;
+      })
+
+      setState(prev => {
+        const next = {
+          ...prev,
+          stage: {
+            [ERagStage.Status]: { key: ERagStage.Status, status: 'done' as const },
+            [ERagStage.Understanding]: { key: ERagStage.Understanding, status: 'done' as const },
+            [ERagStage.Retrieval]: { key: ERagStage.Retrieval, status: 'done' as const },
+            [ERagStage.Generation]: { key: ERagStage.Generation, status: 'done' as const },
+            [ERagStage.Valuation]: { key: ERagStage.Valuation, status: 'done' as const },
+            [ERagStage.Final]: { key: ERagStage.Final, status: 'done' as const },
+            [ERagStage.Error]: { key: ERagStage.Error, status: 'done' as const }
+          },
+          progress: 100
+        };
+        options.onComplete?.(next.output);
+        return next;
+      });
+    }
+
+  }, [setHistory]);
 
   const query = useCallback(async (query: string) => {
     // Reset all stages, progress, and output
@@ -211,14 +262,17 @@ export function useAgenticRag(
 
             case ERagStage.Generation:
               const { answer, followups = [] } = data.output;
+              console.log("Generation:", data.output)
               updateOutput('generation', { answer, followUps: followups });
               updateStage(ERagStage.Generation);
-              updateStageStatus(ERagStage.Generation, 'done');
               updateProgress(75);
               setHistory(prev => {
                 const lastMessage = prev[prev.length - 1];
                 return [...prev.slice(0, -1), { ...lastMessage, content: answer, role: "assistant" }];
               });
+              if(data.finished){
+                updateStageStatus(ERagStage.Generation, 'done');
+              }
               break;
 
             case ERagStage.Valuation:
@@ -251,12 +305,13 @@ export function useAgenticRag(
               break;
 
             case 'error':
-              handleError(data.message);
+              console.error('Error:', data);
+              handleError(data.message || "Unknown error");
               setIsIdle(true);
               break;
 
             default:
-              console.warn(`Unknown event: ${eventType}`);
+              console.warn(`Unknown event: ${event}`);
           }
         }
       }
@@ -278,6 +333,7 @@ export function useAgenticRag(
   return {
     state,
     query,
+    cancel,
     history,
     connectionState,
     isIdle,
